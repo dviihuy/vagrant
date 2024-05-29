@@ -1,0 +1,28 @@
+BOX_IMAGE = "bento/ubuntu-22.04"
+NODE_COUNT = 1
+
+Vagrant.configure("2") do |config|
+  config.vm.define "ldap" do |ldap|
+    ldap.vm.box = BOX_IMAGE
+    ldap.vm.network "private_network", ip: "192.168.56.21"
+    ldap.vm.hostname = "ldap"
+    ldap.vm.provider :virtualbox do |vb|
+      vb.customize ["modifyvm", :id, "--memory", "4096"]
+      vb.customize ["modifyvm", :id, "--cpus", "2"]
+      end
+    ldap.vm.provision "shell", inline: <<-SHELL
+      sudo echo "192.168.56.22 node1" | sudo tee -a /etc/hosts
+      sudo echo "192.168.56.23 node2" | sudo tee -a /etc/hosts    
+    SHELL
+  end
+  (1..NODE_COUNT).each do |i|
+    config.vm.define "node#{i}" do |subconfig|
+      subconfig.vm.box = BOX_IMAGE
+      subconfig.vm.network "private_network", ip: "192.168.56.#{21+i}"
+      subconfig.vm.hostname = "node#{i}"
+      subconfig.vm.provision "shell", inline: <<-SHELL
+        sudo echo "192.168.56.21 ldap" | sudo tee -a /etc/hosts
+      SHELL
+      end
+  end
+end
