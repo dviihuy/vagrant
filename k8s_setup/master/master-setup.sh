@@ -70,7 +70,7 @@ sudo sysctl --system
 
 # Initialize the Kubernetes master node
 echo "Initializing Kubernetes master node..."
-sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --cri-socket unix:///run/containerd/containerd.sock
+sudo kubeadm init --apiserver-advertise-address=192.168.56.11 --pod-network-cidr=200.168.0.0/16 --cri-socket unix:///run/containerd/containerd.sock
 
 # Set up kubeconfig for the current user
 echo "Setting up kubeconfig..."
