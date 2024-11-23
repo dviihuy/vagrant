@@ -1,0 +1,30 @@
+Vagrant.configure("2") do |config|
+  # Number of master nodes from environment variable or default to 1
+  NUM_MASTERS = (ENV['NUM_MASTERS'] || 1).to_i
+
+  # Base IP for private networking
+  base_ip = "192.168.56."
+
+  # Base box
+  config.vm.box = "ubuntu/focal64"
+
+  # Master node setup
+  (1..NUM_MASTERS).each do |i|
+    config.vm.define "k8s-master-#{i}" do |master|
+      master.vm.network "private_network", ip: "#{base_ip}#{i + 10}"
+      master.vm.hostname = "k8s-master-#{i}"
+
+      # Allocate resources for master nodes
+      master.vm.provider "virtualbox" do |vb|
+        vb.memory = 2048
+        vb.cpus = 2
+      end
+
+      # Share the parent directory to access the join command folder
+      master.vm.synced_folder "../join-command", "/vagrant/join-command", type: "virtualbox"
+
+      # Run the master setup script
+      master.vm.provision "shell", path: "master-setup.sh"
+    end
+  end
+end

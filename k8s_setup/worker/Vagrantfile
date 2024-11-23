@@ -1,0 +1,30 @@
+Vagrant.configure("2") do |config|
+  # Number of worker nodes from environment variable or default to 1
+  NUM_WORKERS = (ENV['NUM_WORKERS'] || 1).to_i
+
+  # Base IP for private networking
+  base_ip = "192.168.56."
+
+  # Base box
+  config.vm.box = "ubuntu/focal64"
+
+  # Worker node setup
+  (1..NUM_WORKERS).each do |i|
+    config.vm.define "k8s-worker-#{i}" do |worker|
+      worker.vm.network "private_network", ip: "#{base_ip}#{i + 20}"
+      worker.vm.hostname = "k8s-worker-#{i}"
+
+      # Share the parent directory to access the join command folder
+      worker.vm.synced_folder "../join-command", "/vagrant/join-command", type: "virtualbox"
+
+      # Allocate resources for worker nodes
+      worker.vm.provider "virtualbox" do |vb|
+        vb.memory = 1024
+        vb.cpus = 1
+      end
+
+      # Provision worker nodes without arguments
+      worker.vm.provision "shell", path: "./worker-setup.sh", privileged: true
+    end
+  end
+end
